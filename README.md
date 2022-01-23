@@ -1,1 +1,1 @@
-# gha-cijoe-qemu
+# gh-cijoe-qemu-action
