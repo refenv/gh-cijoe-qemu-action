@@ -1,0 +1,91 @@
+name: 'CIJOE/qemu-guest-provisioner'
+description: 'Provisions a qemu-guest using the given cloud-image url'
+inputs:
+  vm-image:
+    description: 'Url of cloud-image to use for qemu-guest'
+    required: true
+
+  vm-cloudinit:
+    description: 'Name of the cloud-init files found in $CIJ_TESTFILES/cloudinit/{name}'
+    required: true
+    default: 'debian-bullseye'
+
+  cijoe-packages:
+    description: 'List if cijoe packages to install'
+    required: true
+    default: 'cijoe-pkg-example cijoe-pkg-xnvme'
+
+  cijoe-refenv:
+    description: 'Filename of a cijoe reference env. as shipped in $CIJ_ENVS'
+    required: true
+    default: 'refenv-xnvme.sh'
+
+  cijoe-qemu-script:
+    description: 'Filename of a qemu-setup-script as shipped in $CIJ_TESTFILES'
+    required: true
+    default: 'qemu_setup_nvme_1c2ns_nvm_zrwa.sh'
+
+outputs:
+  target-env:
+    description: 'Path to CIJOE target environment'
+    value: ${{ steps.cijoe-qemu.outputs.target-env }}
+  results:
+    description: 'Path to CIJOE test-run output'
+    value: ${{ steps.cijoe-qemu.outputs.results }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: System, install CIJOE and cijoe-packages
+      shell: bash
+      run: pip3 install cijoe cijoe-pkg-qemu ${{ inputs.cijoe-packages }}
+
+    - name: System, setup cijoe and target-environment definition
+      shell: bash
+      run: |
+        pushd $(cij_root) && source modules/cijoe.sh && popd
+        echo "RESULTS=/tmp/results" >> $GITHUB_ENV
+        echo "TARGET_ENV=/tmp/envdef.sh" >> $GITHUB_ENV
+        cat "${CIJ_ENVS}/refenv-qemu.sh" > /tmp/envdef.sh
+        tail -n +2 "${CIJ_ENVS}/${{ inputs.cijoe-refenv }}" >> /tmp/envdef.sh
+
+    - name: System, create output-variables
+      id: cijoe-qemu
+      shell: bash
+      run: |
+        echo "::set-output name=results::$(echo $RESULTS)"
+        echo "::set-output name=target-env::$(echo $TARGET_ENV)"
+
+    - name: System, create the result folder
+      shell: bash
+      run: |
+        mkdir -p ${RESULTS}/
+
+    - name: System, start the SSH server
+      shell: bash
+      run: service ssh restart
+
+    - name: CIJOE/QEMU, provision guest using cloud-image
+      shell: bash
+      run: |
+        pushd $(cij_root) && source modules/cijoe.sh && popd && source $TARGET_ENV
+        mkdir -p "${QEMU_GUESTS}/${QEMU_GUEST_NAME}"
+        cp "${CIJ_TESTFILES}/cloudinit/${{ inputs.vm-cloudinit }}/user-data" "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/."
+        cp "${CIJ_TESTFILES}/cloudinit/${{ inputs.vm-cloudinit }}/meta-data" "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/."
+        qemu.img_from_url "${{ inputs.vm-image }}"
+
+    - name: CIJOE/QEMU, start the guest
+      shell: bash
+      run: |
+        pushd $(cij_root) && source modules/cijoe.sh && popd && source $TARGET_ENV
+        source "${CIJ_TESTFILES}/${{ inputs.cijoe-qemu-script }}"
+        qemu_setup_pcie
+        QEMU_ARGS_EXTRA="$QEMU_SETUP_PCIE"
+        qemu.run
+
+    - name: CIJOE/QEMU, wait for it to settle and run a command
+      shell: bash
+      run: |
+        pushd $(cij_root) && source modules/cijoe.sh && popd && source $TARGET_ENV
+        sleep 45
+        cij.cmd "hostname"
