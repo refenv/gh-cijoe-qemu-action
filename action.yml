@@ -1,0 +1,58 @@
+name: 'CIJOE/qemu guest provisioner'
+description: 'Provisions a qemu-guest using the given cloud-image url'
+inputs:
+  vm-image:
+    description: 'Url of cloud-image to use for qemu-guest'
+    required: true
+outputs:
+  target-env:
+    description: 'Path to CIJOE target environment'
+    value: ${{ steps.cijoe-qemu.outputs.target-env }}
+  results:
+    description: 'Path to CIJOE test-run output'
+    value: ${{ steps.cijoe-qemu.outputs.results }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: System, install CIJOE and cijoe-packages
+      shell: bash
+      run: pip3 install cijoe cijoe-pkg-example cijoe-pkg-xnvme
+
+    - name: System, setup environment variables
+      shell: bash
+      run: |
+        source /opt/scripts/suitup.sh
+        echo "RESULTS=/tmp/results" >> $GITHUB_ENV
+        echo "TARGET_ENV=${CIJ_ENVS}/refenv-xnvme-qemu.sh" >> $GITHUB_ENV
+
+    - name: System, create output-variables
+      id: cijoe-qemu
+      shell: bash
+      run: |
+        echo "::set-output name=results::$(echo $RESULTS)"
+        echo "::set-output name=target-env::$(echo $TARGET_ENV)"
+
+    - name: System, create the result folder
+      shell: bash
+      run: |
+        mkdir -p ${RESULTS}/
+
+    - name: System, start the SSH server
+      shell: bash
+      run: service ssh restart
+
+    - name: CIJOE/QEMU, provision guest using cloud-image
+      shell: bash
+      run: |
+        source /opt/scripts/suitup.sh
+        qemu.img_from_url "${{ inputs.vm-image }}"
+
+    - name: CIJOE/QEMU, start the guest
+      shell: bash
+      run: |
+        source /opt/scripts/suitup.sh
+        source "${CIJ_TESTFILES}/qemu_setup_nvme_1c2ns_nvm_zrwa.sh"
+        qemu_setup_pcie
+        QEMU_ARGS_EXTRA="$QEMU_SETUP_PCIE"
+        qemu.run
