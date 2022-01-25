@@ -24,7 +24,7 @@ runs:
       run: |
         source /opt/scripts/suitup.sh
         echo "RESULTS=/tmp/results" >> $GITHUB_ENV
-        echo "TARGET_ENV=${CIJ_ENVS}/refenv-xnvme-qemu.sh" >> $GITHUB_ENV
+        echo "TARGET_ENV=${{ github.action_path }}/envs/refenv-xnvme-qemu-freebsd.sh" >> $GITHUB_ENV
 
     - name: System, create output-variables
       id: cijoe-qemu
