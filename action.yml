@@ -46,6 +46,7 @@ runs:
       shell: bash
       run: |
         source /opt/scripts/suitup.sh
+        echo "QEMU_GUEST_PATH=${{ github.action_path }}/guests/emujoe/"
         qemu.img_from_url "${{ inputs.vm-image }}"
 
     - name: CIJOE/QEMU, start the guest
