@@ -8,7 +8,7 @@
 : "${QEMU_HOST_IMG_BIN:=qemu-img}"; export QEMU_HOST_IMG_BIN
 
 : "${QEMU_GUESTS:=/opt/ghar/_work/_actions/refenv/gh-cijoe-qemu-action/freebsd/guests}"; export QEMU_GUESTS
-: "${QEMU_GUEST_NAME:=freebsd-13.0}"; export QEMU_GUEST_NAME
+: "${QEMU_GUEST_NAME:=freebsd-13}"; export QEMU_GUEST_NAME
 # This is for defining a port-forward from host to guest
 : "${QEMU_GUEST_SSH_FWD_PORT:=2222}"; export QEMU_GUEST_SSH_FWD_PORT
 #: "${QEMU_GUEST_CONSOLE:=file}"; export QEMU_GUEST_CONSOLE
