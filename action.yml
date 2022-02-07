@@ -87,5 +87,5 @@ runs:
       shell: bash
       run: |
         pushd $(cij_root) && source modules/cijoe.sh && popd && source $TARGET_ENV
-        sleep 45
+        sleep 60
         cij.cmd "hostname"
