@@ -65,16 +65,22 @@ runs:
       shell: bash
       run: service ssh restart
 
-    - name: CIJOE/QEMU, provision guest using cloud-image
+    - name: CIJOE/QEMU, prepare guest user-data and meta-data
       shell: bash
       run: |
         pushd $(cij_root) && source modules/cijoe.sh && popd && source $TARGET_ENV
+        rm -r "${QEMU_GUESTS}"
         mkdir -p "${QEMU_GUESTS}/${QEMU_GUEST_NAME}"
         cp "${CIJ_TESTFILES}/cloudinit/${{ inputs.vm-cloudinit }}/user-data" "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/user-data"
         cp "${CIJ_TESTFILES}/cloudinit/${{ inputs.vm-cloudinit }}/meta-data" "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/meta-data"
         echo "ssh_authorized_keys:" >> "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/user-data"
         echo -n "- " >> "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/user-data"
-        cat ~/.ssh/id_rsa.pub >> "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/user-data"
+        cat /root/.ssh/id_rsa.pub >> "${QEMU_GUESTS}/${QEMU_GUEST_NAME}/user-data"
+
+    - name: CIJOE/QEMU, provision guest using cloud-image
+      shell: bash
+      run: |
+        pushd $(cij_root) && source modules/cijoe.sh && popd && source $TARGET_ENV
         qemu.img_from_url "${{ inputs.vm-image }}"
 
     - name: CIJOE/QEMU, start the guest
