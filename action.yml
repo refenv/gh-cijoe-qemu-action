@@ -15,6 +15,11 @@ inputs:
     required: true
     default: 'cijoe-pkg-example cijoe-pkg-xnvme'
 
+  cijoe-packages-pre:
+    description: 'Install pre-release version of packages --pre'
+    required: false
+    default: 'true'
+
   cijoe-refenv:
     description: 'Filename of a cijoe reference env. as shipped in $CIJ_ENVS'
     required: true
@@ -36,8 +41,16 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: System, install CIJOE and cijoe-packages
+    - name: System, install CIJOE and cijoe-packages (pre-release version)
       shell: bash
+      if: ${{ inputs.cijoe-packages-pre == 'true' }}
+      run: |
+        pip3 install --pre cijoe cijoe-pkg-qemu ${{ inputs.cijoe-packages }}
+        pip3 install --pre cijoe cijoe-pkg-qemu ${{ inputs.cijoe-packages }} --upgrade
+
+    - name: System, install CIJOE and cijoe-packages (regular version)
+      shell: bash
+      if: ${{ inputs.cijoe-packages-pre == 'false' }}
       run: pip3 install cijoe cijoe-pkg-qemu ${{ inputs.cijoe-packages }}
 
     - name: System, setup cijoe and target-environment definition
