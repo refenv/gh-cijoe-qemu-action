@@ -60,6 +60,7 @@ runs:
         echo "RESULTS=/tmp/results" >> $GITHUB_ENV
         echo "TARGET_ENV=/tmp/envdef.sh" >> $GITHUB_ENV
         cat "${CIJ_ENVS}/refenv-qemu.sh" > /tmp/envdef.sh
+        echo "export QEMU_HOST_SYSTEM_BIN=/opt/qemu/bin/qemu-system-x86_64" >> /tmp/envdef.sh
         tail -n +2 "${CIJ_ENVS}/${{ inputs.cijoe-refenv }}" >> /tmp/envdef.sh
 
     - name: System, create output-variables
@@ -103,7 +104,7 @@ runs:
         source "${CIJ_TESTFILES}/${{ inputs.cijoe-qemu-script }}"
         qemu_setup_pcie
         QEMU_ARGS_EXTRA="$QEMU_SETUP_PCIE"
-        PATH="/opt/qemu/bin:$PATH" qemu.run
+        qemu.run
 
     - name: CIJOE/QEMU, wait for it to settle and run a command
       shell: bash
