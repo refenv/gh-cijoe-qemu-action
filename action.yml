@@ -41,6 +41,11 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: System, add /opt/qemu/bin to PATH
+      shell: bash
+      run: |
+        echo "/opt/qemu/bin" >> $GITHUB_PATH
+
     - name: System, install CIJOE and cijoe-packages (pre-release version)
       shell: bash
       if: ${{ inputs.cijoe-packages-pre == 'true' }}
