@@ -41,11 +41,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: System, add /opt/qemu/bin to PATH
-      shell: bash
-      run: |
-        echo "/opt/qemu/bin" >> $GITHUB_PATH
-
     - name: System, install CIJOE and cijoe-packages (pre-release version)
       shell: bash
       if: ${{ inputs.cijoe-packages-pre == 'true' }}
@@ -108,7 +103,7 @@ runs:
         source "${CIJ_TESTFILES}/${{ inputs.cijoe-qemu-script }}"
         qemu_setup_pcie
         QEMU_ARGS_EXTRA="$QEMU_SETUP_PCIE"
-        qemu.run
+        PATH="/opt/qemu/bin:$PATH" qemu.run
 
     - name: CIJOE/QEMU, wait for it to settle and run a command
       shell: bash
